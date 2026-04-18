@@ -1,0 +1,4 @@
+{
+  "timezone": "Asia/Taipei",
+  "ignorePatterns": ["已收回訊息", "照片", "貼圖"]
+}

@@ -1,0 +1,8 @@
+node_modules
+.env
+.vercel
+
+# sync 下來的訊息記錄（含私訊內容，不進 git）
+logs/*
+!logs/.gitkeep
+messages/
