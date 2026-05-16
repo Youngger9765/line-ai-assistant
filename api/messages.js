@@ -39,9 +39,16 @@ export default async function handler(req, res) {
         };
       }
       groups[msg.groupId].messages.push({
-        text: msg.text,
+        type: msg.type || 'text',         // 向下相容：舊 KV 條目沒有 type 欄位
+        text: msg.text || null,
+        mediaUrl: msg.mediaUrl || null,
+        contentType: msg.contentType || null,
+        fileName: msg.fileName || null,
+        fileSize: msg.fileSize || null,
+        duration: msg.duration || null,
         timestamp: msg.timestamp,
         userId: msg.userId,
+        userName: msg.userName || null,
       });
     }
 

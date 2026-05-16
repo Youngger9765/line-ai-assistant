@@ -4,9 +4,13 @@
 
 ## 它做什麼？
 
-1. LINE Bot 加入群組後，自動收集所有文字訊息到雲端暫存
+1. LINE Bot 加入群組後，自動收集訊息到雲端暫存
 2. 你在自己的電腦打開 Claude Code，說一聲「sync」
 3. Claude Code 抓取訊息、產出摘要，直接給你看
+
+**支援的訊息類型：文字 / 圖片 / 影片 / 音訊 / 檔案**（貼圖自動過濾不收集）
+
+媒體訊息會上傳到 Vercel Blob 取得公開 URL，KV 只存 metadata（URL / contentType / fileName），不存 binary
 
 **不需要 Anthropic API Key** — 你的 Claude Code 本身就是 AI
 
@@ -80,6 +84,15 @@ LINE 群組訊息 → Webhook → Vercel KV 暫存
 3. 取名（例如 `line-messages`），選一個 region
 4. 建立後會自動設定 `KV_REST_API_URL` 和 `KV_REST_API_TOKEN`
 5. 重新部署一次（Settings → Deployments → 最新的 → Redeploy）
+
+**Vercel Blob 設定（媒體儲存）：**
+
+1. 同一個 Storage 頁面，點選 **Create Database** → 選 **Blob**
+2. 取名（例如 `line-media`）
+3. 建立後會自動注入 `BLOB_READ_WRITE_TOKEN` 環境變數到你的專案
+4. 重新部署一次即可（無需手動設定 token）
+
+> 媒體儲存在 Vercel Blob，路徑格式：`line-media/{groupId}/{messageId}.{ext}`，公開 URL 可直接預覽
 
 ### Step 4：設定 LINE Webhook URL
 
