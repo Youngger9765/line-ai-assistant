@@ -42,6 +42,7 @@ export default async function handler(req, res) {
         text: msg.text,
         timestamp: msg.timestamp,
         userId: msg.userId,
+        userName: msg.userName,
       });
     }
 
