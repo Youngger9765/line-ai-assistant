@@ -4,20 +4,22 @@ Read `CLAUDE.md` for the project workflow, but follow the Codex-specific rules b
 
 ## Setup
 
-Treat `setup`, `設定`, `初始化`, `第一次`, and similar first-run requests as the same onboarding workflow. Goal: take a non-technical user from a fresh fork to a working sync. **Do the secret setup for them** — generate keys and write `.env` yourself so the user types as little as possible. No CLI install, no terminal expertise.
+When the user says `setup` / `部署` / `deploy` / `設定`, do the whole onboarding for them with the Vercel CLI and your own judgment. Keep their actions to the absolute minimum — ideally they only **approve authorizations and confirm**. Do not make them read commands or open a dashboard.
 
-1. Do NOT install anything (no `gh`, no `vercel`, no `git`, no `npm`). Deployment happens on the Vercel website; this app only needs `.env` and network access
-2. If `.env` does not exist, copy `.env.example` to `.env`
-3. Generate a strong random `SYNC_SECRET` yourself (e.g. `openssl rand -hex 16`) and write it into `.env`. Do not make the user invent or type a password
-4. Tell the user to open `.env`, copy the `SYNC_SECRET` value, and paste it into Vercel as the `SYNC_SECRET` environment variable when they deploy. Do not print the value in chat — have them copy it from their own file
-5. The LINE keys (`LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`) are entered only in Vercel's website during deploy — never handle, request, or print them locally
-6. After the user deploys, ask only for their Vercel URL, then write it to `BOT_URL` in `.env` (strip `https://` and any trailing slash)
-7. Never print, quote, or echo any `.env` value back to the user or inside a command
-8. Run one `sync` (see the Sync section) to verify the connection
-9. On HTTP 401, the `SYNC_SECRET` does not match Vercel — tell the user to re-check that Vercel and `.env` hold the same value. On a connection error, confirm the Vercel deployment is live and `BOT_URL` is correct
-10. Report success only after a real response: state the number of groups and messages received, with no secret shown
+**You do, end to end (via `npx vercel`, the user installs nothing):** generate `SYNC_SECRET` yourself, deploy to **production** (`--prod`), set the three env vars (`SYNC_SECRET`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`), provision storage, redeploy, write `BOT_URL` to `.env`, then verify.
 
-Do not claim setup is complete until a verification `sync` has actually returned data
+**The user only has to:**
+1. Approve the one `vercel login` browser prompt
+2. Paste the LINE **Channel Secret** and **Access Token** — LINE has no CLI, so this is the only thing you cannot get yourself
+3. Confirm at the end
+
+**Non-obvious facts you must apply (the rest you already know):**
+- Preview deployments are auth-walled — always deploy with `--prod` so the webhook is public
+- Storage: `vercel integration add upstash` → choose **Upstash for Redis** from the interactive list (a bare `upstash` errors with "Product not found")
+- If `${BOT_URL}/api/health` returns an "Authentication Required" page, the project has **Deployment Protection** on (rare on fresh Hobby accounts) → ask the user to turn off Vercel Authentication for Production; this is the only step that might need the website
+- Never print, echo, or commit any secret; secrets live only in `.env` / Vercel
+
+Do not claim setup is done until `/api/health` returns ok and one `sync` actually returns data.
 
 ## Sync
 
