@@ -1,5 +1,5 @@
 #!/bin/bash
-# 驗證一切正常 — 檢查部署、webhook、KV
+# 驗證一切正常 — 檢查部署、webhook、Redis
 
 SCRIPT_DIR="$(dirname "$0")"
 ENV_FILE="$(dirname "$SCRIPT_DIR")/.env"

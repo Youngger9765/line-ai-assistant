@@ -1,6 +1,6 @@
-import { kv } from '@vercel/kv';
+import { kv } from '../lib/redis.js';
 
-// 訊息讀取端點 — 讓 Claude Code 在本機抓取所有暫存訊息
+// 訊息讀取端點 — 讓 Codex 從學員電腦抓取所有暫存訊息
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

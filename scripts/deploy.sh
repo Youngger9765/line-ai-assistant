@@ -46,11 +46,14 @@ echo "$LINE_CHANNEL_SECRET" | vercel env add LINE_CHANNEL_SECRET production --ye
 echo "$LINE_CHANNEL_ACCESS_TOKEN" | vercel env add LINE_CHANNEL_ACCESS_TOKEN production --yes 2>/dev/null || true
 echo "$SYNC_SECRET" | vercel env add SYNC_SECRET production --yes 2>/dev/null || true
 
-# 5. 建 KV
-echo "  💾 建立 KV 資料庫..."
-vercel storage create kv line-messages 2>/dev/null || echo "  （KV 可能已存在，跳過）"
+# 5. Redis 必須從 Vercel Marketplace 安裝
+echo ""
+echo "  💾 Redis 設定"
+echo "  請到 Vercel 專案 → Storage → Marketplace → Upstash Redis"
+echo "  建立並連結資料庫後，確認專案出現 UPSTASH_REDIS_REST_URL 與 UPSTASH_REDIS_REST_TOKEN"
+read -r -p "  完成後按 Enter 繼續重新部署..."
 
-# 6. 重新部署（讓 env + KV 生效）
+# 6. 重新部署（讓 env + Redis integration 生效）
 echo "  🔄 重新部署..."
 vercel deploy --prod --yes
 

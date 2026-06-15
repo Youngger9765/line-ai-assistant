@@ -1,37 +1,37 @@
 # LINE AI 群組助理
 
-自動收集 LINE 群組訊息，用 Claude Code 在你自己的電腦上做摘要
+自動收集 LINE 群組訊息，用 Codex 或 Claude Code 抓取並摘要
 
 ## 它做什麼？
 
 1. LINE Bot 加入群組後，自動收集所有文字訊息到雲端暫存
-2. 你在自己的電腦打開 Claude Code，說一聲「sync」
-3. Claude Code 抓取訊息、產出摘要，直接給你看
+2. 你在自己的電腦打開 Codex，說一聲「sync」
+3. Codex 抓取訊息、產出摘要，直接給你看
 
-**不需要 Anthropic API Key** — 你的 Claude Code 本身就是 AI
+**不需要 LLM API Key** — 使用你的 ChatGPT/Codex 訂閱額度
 
 ## 架構圖
 
 ```
-LINE 群組訊息 → Webhook → Vercel KV 暫存
+LINE 群組訊息 → Webhook → Upstash Redis 暫存
                                 ↓
-你的電腦：Claude Code → GET /api/messages → 存檔 + 摘要報告
+你的電腦：Codex → GET /api/messages → 摘要報告
 ```
 
-雲端只負責收集，摘要在你的電腦上完成
+Vercel 與 Redis 負責收集，Codex 從你的電腦操作並使用 ChatGPT 模型摘要
 
 ---
 
 ## 前置準備
 
-你需要以下帳號（都是免費的）：
+你需要以下帳號：
 
-- [Claude Pro](https://claude.ai/) + [Claude Code](https://docs.anthropic.com/en/docs/claude-code)（你的 AI 助理）
+- ChatGPT 方案 + Codex 桌面版
 - [LINE Developers](https://developers.line.biz/) 帳號
 - [Vercel](https://vercel.com/) 帳號（用 GitHub 登入）
 - [GitHub](https://github.com/) 帳號
 
-**不需要**：~~Anthropic API Key~~、~~Cron 排程~~
+**不需要**：~~OpenAI API Key~~、~~Cron 排程~~
 
 ---
 
@@ -39,13 +39,18 @@ LINE 群組訊息 → Webhook → Vercel KV 暫存
 
 ### Step 1：建立 LINE Bot
 
-1. 到 [LINE Developers Console](https://developers.line.biz/console/)
-2. 建立一個新的 **Provider**（隨意取名）
-3. 建立一個新的 **Messaging API Channel**
-4. 記下這兩個值：
+1. 到 [LINE Official Account Manager](https://manager.line.biz/) 登入 LINE Business ID
+2. 建立一個一般 LINE Official Account，不需要申請認證帳號
+3. 打開該帳號 → Settings → **Messaging API** → **Enable Messaging API**
+4. 第一次使用 Developers 時，先登記開發者名稱與 Email
+5. 建立或選擇 Provider。Provider 綁定後不能更換，個人課堂測試請建立自己的 Provider
+6. 啟用後，系統會自動建立 Messaging API channel
+7. 回到 [LINE Developers Console](https://developers.line.biz/console/) → Provider → 打開剛建立的 channel
+8. 在 Messaging API 頁開啟 **Allow bot to join group chats**
+9. 記下這兩個值：
    - **Channel Secret**（在 Basic settings 頁面）
-   - **Channel Access Token**（在 Messaging API 頁面，按 Issue 產生）
-5. 在 Messaging API 頁面：
+   - **Channel access token (long-lived)**（在 Messaging API 頁面按 Issue，課堂操作最簡單）
+10. 在 LINE Official Account Manager 關閉：
    - 關閉 **Auto-reply messages**
    - 關閉 **Greeting messages**
 
@@ -73,12 +78,12 @@ LINE 群組訊息 → Webhook → Vercel KV 暫存
 
 設定完成後，按 **Deploy**
 
-**Vercel KV 設定：**
+**Upstash Redis 設定：**
 
 1. 部署完成後，到 Vercel Dashboard → 你的專案 → **Storage**
-2. 點選 **Create Database** → 選 **KV (Redis)**
-3. 取名（例如 `line-messages`），選一個 region
-4. 建立後會自動設定 `KV_REST_API_URL` 和 `KV_REST_API_TOKEN`
+2. 從 Marketplace 安裝 **Upstash Redis**
+3. 建立並連結資料庫，選 Tokyo 或 Singapore
+4. 確認 Vercel 自動設定 `UPSTASH_REDIS_REST_URL` 和 `UPSTASH_REDIS_REST_TOKEN`
 5. 重新部署一次（Settings → Deployments → 最新的 → Redeploy）
 
 ### Step 4：設定 LINE Webhook URL
@@ -112,16 +117,15 @@ LINE 群組訊息 → Webhook → Vercel KV 暫存
 
 ## 怎麼 Sync
 
-1. 打開終端機，`cd` 到這個專案資料夾
-2. 執行 `claude`（啟動 Claude Code）
-3. 跟 Claude 說：**「sync」**
+1. 用 Codex 桌面版開啟這個專案資料夾
+2. 跟 Codex 說：**「sync」**
 
-Claude Code 會自動：
+Codex 會自動：
 - 抓取 Vercel 上暫存的訊息
 - 對每個群組產出重要事項摘要
 - 把報告顯示在終端機裡
 
-如果你想把摘要推送回 LINE，跟 Claude 說 **「推送」**
+如果你想把摘要推送回 LINE，跟 Codex 說 **「推送」**
 
 ---
 
@@ -134,7 +138,7 @@ Claude Code 會自動：
 | `timezone` | 時區 | `"Asia/Taipei"` |
 | `ignorePatterns` | 要忽略的訊息內容 | `["已收回訊息", "照片", "貼圖"]` |
 
-編輯 `CLAUDE.md` 可以自訂 Claude Code 的摘要行為（格式、重點、語言等）
+編輯 `AGENTS.md` 可以自訂 Codex 的摘要行為（格式、重點、語言等）
 
 ---
 
@@ -154,14 +158,17 @@ Claude Code 會自動：
 - 確認 LINE Developers 的 Auto-reply 和 Greeting 都已關閉
 - 到 Vercel → Logs 查看 webhook 有沒有收到請求
 
-### 需要 Anthropic API Key 嗎？
-不需要。Claude Code 本身就是 AI，它直接在你的電腦上做摘要。你只需要 Claude Pro 訂閱 + Claude Code
+### 需要 OpenAI API Key 嗎？
+不需要。Codex 使用你的 ChatGPT 方案，不必另外申請 API key
+
+### 群組訊息會只留在本機嗎？
+不會。Vercel 與 Redis 會暫存原始訊息，sync 後訊息內容會交給 Codex 模型產生摘要。不要用於病歷、金融或其他高度敏感資料
 
 ### 費用大概多少？
 - **LINE Messaging API**：免費
 - **Vercel**：免費方案足夠（Hobby plan）
-- **Claude Pro**：$20/月（你可能本來就有）
-- **Anthropic API**：不需要，省下來了
+- **ChatGPT**：依你的訂閱方案
+- **OpenAI API**：不需要
 
 ---
 
@@ -170,10 +177,10 @@ Claude Code 會自動：
 ```
 line-ai-assistant/
 ├── api/
-│   ├── webhook.js      # 接收 LINE 訊息，存入 KV
-│   ├── messages.js     # 提供訊息給 Claude Code 讀取
+│   ├── webhook.js      # 接收 LINE 訊息，存入 Redis
+│   ├── messages.js     # 提供訊息給 Codex 讀取
 │   └── health.js       # 健康檢查
-├── CLAUDE.md             # Claude Code 的 sync 指令
+├── AGENTS.md           # Codex 的 sync 指令
 ├── config.json         # 設定檔
 ├── vercel.json         # Vercel 部署設定
 ├── package.json        # 套件管理

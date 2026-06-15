@@ -20,7 +20,7 @@ check() {
 check "node" "Node.js ($(node -v 2>/dev/null || echo '未安裝'))" "到 https://nodejs.org 下載安裝"
 check "npm" "npm ($(npm -v 2>/dev/null || echo '未安裝'))" "裝好 Node.js 就會有"
 check "git" "Git ($(git --version 2>/dev/null | cut -d' ' -f3 || echo '未安裝'))" "到 https://git-scm.com 下載"
-check "claude" "Claude Code" "終端機跑：npm i -g @anthropic-ai/claude-code"
+check "python3" "Python 3 ($(python3 --version 2>/dev/null || echo '未安裝'))" "Codex 會改用系統 HTTP 工具執行 sync"
 check "vercel" "Vercel CLI ($(vercel -v 2>/dev/null || echo '未安裝'))" "終端機跑：npm i -g vercel"
 
 echo "================================"

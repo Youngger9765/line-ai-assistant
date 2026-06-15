@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { kv } from '../lib/redis.js';
 
 // 健康檢查端點 — 確認服務正常，回傳群組數量
 export default async function handler(req, res) {
@@ -13,6 +13,10 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), groups: groups.length });
   } catch {
-    return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), groups: 0, note: 'KV not connected yet' });
+    return res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: 'Redis not connected',
+    });
   }
 }

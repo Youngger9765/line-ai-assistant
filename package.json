@@ -1,14 +1,14 @@
 {
   "name": "line-ai-assistant",
   "version": "2.0.0",
-  "description": "LINE 群組 AI 助理 — 收集訊息，用 Claude Code 在本機摘要",
+  "description": "LINE 群組 AI 助理 — 收集訊息，用 Codex 產生摘要",
   "type": "module",
   "scripts": {
     "dev": "vercel dev"
   },
   "dependencies": {
     "@line/bot-sdk": "^9.6.0",
-    "@vercel/kv": "^3.0.0"
+    "@upstash/redis": "^1.38.0"
   },
   "license": "MIT"
 }

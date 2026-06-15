@@ -1,8 +1,8 @@
 import crypto from 'crypto';
-import { kv } from '@vercel/kv';
 import { Client } from '@line/bot-sdk';
+import { kv } from '../lib/redis.js';
 
-// LINE Webhook — 接收群組訊息，存入 Vercel KV（純收集，不做摘要）
+// LINE Webhook — 接收群組訊息，存入 Redis（純收集，不做摘要）
 
 export const config = { api: { bodyParser: false } };
 

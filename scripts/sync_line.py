@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sync LINE — 從 Vercel KV 抓取訊息，存到本地 logs/
+Sync LINE — 從 Redis-backed API 抓取訊息，存到本地 logs/
 
 用法：
   python3 scripts/sync_line.py              # 抓取 + 存檔
