@@ -9,7 +9,7 @@ export default async function handler(req, res) {
       const [next, batch] = await kv.scan(cursor, { match: 'group:*', count: 100 });
       cursor = next;
       groups.push(...batch);
-    } while (cursor !== 0);
+    } while (String(cursor) !== '0');
 
     return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), groups: groups.length });
   } catch {

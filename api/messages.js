@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       const [next, batch] = await kv.scan(cursor, { match: 'msg:*', count: 100 });
       cursor = next;
       msgKeys.push(...batch);
-    } while (cursor !== 0);
+    } while (String(cursor) !== '0');
 
     // 讀取所有訊息內容
     const messages = [];
