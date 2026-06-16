@@ -1,4 +1,4 @@
-import { kv } from '../lib/redis.js';
+import { kv, store } from '../lib/redis.js';
 
 // 健康檢查端點 — 確認服務正常，回傳群組數量
 export default async function handler(req, res) {
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
       groups.push(...batch);
     } while (String(cursor) !== '0');
 
-    return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), groups: groups.length });
+    return res.status(200).json({ status: 'ok', store, timestamp: new Date().toISOString(), groups: groups.length });
   } catch {
     return res.status(503).json({
       status: 'error',

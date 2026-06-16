@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@line/bot-sdk": "^9.6.0",
-    "@upstash/redis": "^1.38.0"
+    "@upstash/redis": "^1.38.0",
+    "postgres": "^3.4.9"
   },
   "license": "MIT"
 }
