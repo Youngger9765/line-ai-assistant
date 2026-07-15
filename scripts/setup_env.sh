@@ -19,19 +19,16 @@ read -p "你的 Vercel 網址（例如 line-ai-assistant-xxx.vercel.app）: " BO
 read -p "你的 LINE Channel Secret: " LINE_CHANNEL_SECRET
 read -p "你的 LINE Channel Access Token: " LINE_CHANNEL_ACCESS_TOKEN
 read -p "你的 LINE User ID（Basic settings 最下面的 U 開頭）: " LINE_USER_ID
-read -p "你的 Upstash REST URL（Upstash 資料庫頁複製）: " UPSTASH_REDIS_REST_URL
-read -p "你的 Upstash REST TOKEN: " UPSTASH_REDIS_REST_TOKEN
 
 # 自動生成 SYNC_SECRET（不用自己想密碼）
 SYNC_SECRET=$(openssl rand -hex 16 2>/dev/null || python3 -c "import secrets; print(secrets.token_hex(16))")
 
+# 資料庫（Upstash）走 Vercel 整合自動注入 env，不在這裡填 —— deploy.sh 會裝
 cat > "$ENV_FILE" << EOF
 # === Vercel 部署用 ===
 LINE_CHANNEL_SECRET=$LINE_CHANNEL_SECRET
 LINE_CHANNEL_ACCESS_TOKEN=$LINE_CHANNEL_ACCESS_TOKEN
 SYNC_SECRET=$SYNC_SECRET
-UPSTASH_REDIS_REST_URL=$UPSTASH_REDIS_REST_URL
-UPSTASH_REDIS_REST_TOKEN=$UPSTASH_REDIS_REST_TOKEN
 
 # === 本機 sync 用 ===
 BOT_URL=$BOT_URL

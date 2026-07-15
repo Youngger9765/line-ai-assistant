@@ -54,53 +54,32 @@ Vercel 與 Upstash Redis 負責收集，Codex 從你的電腦操作並使用 Cha
    - 關閉 **Auto-reply messages**
    - 關閉 **Greeting messages**
 
-### Step 2：建立 Upstash Redis（資料暫存 — 先建好，部署時要用）
+### Step 2：部署 —— 跟 Codex 說一聲「部署」
 
-1. 到 [Upstash](https://upstash.com/) 用 GitHub 登入，**Create Database**（Redis，免費，region 選 Tokyo 或 Singapore）
-2. 建好後在資料庫頁面複製 **REST URL** 與 **REST TOKEN**（等下設定環境變數用）
+用 Codex 桌面版打開這個專案資料夾，跟它說 **「部署」**（或 `setup` / `deploy`）。
 
-> Upstash 免費方案**不會因閒置暫停**（至少 30 天無活動才封存、且會先備份可還原），課堂完全夠 —— 這也是選它不選 Supabase（7 天就暫停）的原因。
+**Codex 會自動做完**（你不用開終端機打指令、不用進 Vercel 後台）：
+- 產生 `SYNC_SECRET`、部署到 Vercel production、設定環境變數
+- 裝 **Upstash Redis**（資料暫存，免費、不會因閒置暫停）
+- 自動把 **LINE Webhook** 指回你的專案並驗證
+- 把 `BOT_URL` 寫進 `.env`、最後打 `/api/health` 確認接通
 
-### Step 3：部署（二選一，挑一條走到底）
+**你只要做 3 件事**：
+1. 打開 Codex 給你的 **Vercel 登入連結**，授權（確認 device code）
+2. 貼上 LINE 的 **Channel Secret** 和 **Access Token**（LINE 沒有 CLI，只有這個 Codex 拿不到）
+3. 最後確認
 
-到這裡你手上應該有 4 個值：LINE Channel Secret、LINE Access Token、Upstash REST URL、Upstash REST TOKEN。
+> 不想用 Codex？見文末「手動部署（備援）」。
 
-**方法 A｜腳本一條龍（推薦）** — 部署 + 灌環境變數 + 註冊 webhook 全自動，`SYNC_SECRET` 也自動產生、不會對不上：
+### Step 3：打開 LINE 的「Use webhook」開關
 
-```
-git clone https://github.com/Youngger9765/line-ai-assistant
-cd line-ai-assistant
-bash scripts/setup_env.sh    # 填 LINE×2 + Upstash×2 + User ID（SYNC_SECRET 自動生成）
-bash scripts/deploy.sh       # 自動部署 + 灌所有環境變數 + 註冊 LINE webhook
-```
+Codex 已經幫你把 Webhook URL 填好、也驗證過了，但 LINE 的 **Use webhook** 開關**沒有 API 可以切**，只能手動開一次：
 
-**方法 B｜一鍵 button（手動填環境變數）**
+到 LINE Developers → 你的 Channel → **Messaging API** → 把 **Use webhook** 打開。
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FYoungger9765%2Fline-ai-assistant&env=LINE_CHANNEL_SECRET,LINE_CHANNEL_ACCESS_TOKEN,SYNC_SECRET,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
+> 這是整個流程裡**唯一一定要手動點的**東西。
 
-按下去後，**5 個環境變數一次填齊**（這樣部署完才不會因為缺資料庫就壞掉）：
-
-| 變數名稱 | 值 |
-|---------|---|
-| `LINE_CHANNEL_SECRET` | 你的 Channel Secret |
-| `LINE_CHANNEL_ACCESS_TOKEN` | 你的 Access Token |
-| `SYNC_SECRET` | 隨便打一組密碼（本機 `.env` 等下要用**同一組**）|
-| `UPSTASH_REDIS_REST_URL` | Upstash REST URL |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash REST TOKEN |
-
-> ⚠️ 方法 A、方法 B **不要混用** —— 兩邊各自的 `SYNC_SECRET` 會不一樣，sync 會失敗。
-
-### Step 4：開 Webhook + 確認通了
-
-1. 到 LINE Developers → 你的 Channel → **Messaging API**，把 **Use webhook** 打開（**唯一一定要手動的開關**，預設是關的）
-2. 註冊 Webhook URL：
-   - **方法 A**：`deploy.sh` 已經自動做了，跳過
-   - **方法 B**：終端機跑一次 `curl -X POST -H "Authorization: Bearer 你的SYNC_SECRET" https://你的專案.vercel.app/api/setup`，看到 `{ "ok": true }` 即可（SYNC_SECRET 走 header、不放進網址）
-3. **確認通了**：打開 `https://你的專案.vercel.app/api/health`
-   - 看到 `{"status":"ok","store":"upstash",...}` → 資料庫接好了 ✅
-   - 看到 `503` → Upstash 金鑰有問題，回 Step 2/3 檢查
-
-### Step 5：把 Bot 加入群組
+### Step 4：把 Bot 加入群組
 
 1. 在 LINE Developers → Messaging API 頁面，掃描 **QR Code** 加 Bot 為好友
 2. 把 Bot 邀請進你想追蹤的 LINE 群組
@@ -108,14 +87,32 @@ bash scripts/deploy.sh       # 自動部署 + 灌所有環境變數 + 註冊 LIN
 
 > **⚠️ 隱私提醒**：Bot 會收集群組裡的文字訊息。如果你不是群組管理者，請先告知群組成員。建議在群組發一則：「我加了一個 AI 助理，它會幫我整理每天的重點，不會主動發言」
 
-### Step 6：本機 .env（給 Codex sync 用）
+---
 
-- **方法 A**：`setup_env.sh` 已經幫你建好 `.env` 了，這步跳過
-- **方法 B**：把 `.env.example` 複製成 `.env`，填入：
-  - `BOT_URL` → 你的 Vercel 網址（例如 `my-bot.vercel.app`）
-  - `SYNC_SECRET` → **你在 Step 3 button 設的同一組**（不一樣 sync 會 401）
-  - `LINE_CHANNEL_ACCESS_TOKEN` → 你的 LINE Access Token（推送用）
-  - `LINE_USER_ID` → 你的 LINE User ID（推送用）
+## 手動部署（備援 — 不用 Codex 時）
+
+Codex 拿不到的只有 LINE 那兩個值，其餘都能自動；下面是不用 Codex 的兩條路。
+
+**A｜腳本**（要有 Node + 終端機）
+
+```
+git clone https://github.com/Youngger9765/line-ai-assistant
+cd line-ai-assistant
+bash scripts/setup_env.sh    # 填 LINE×2 + User ID（SYNC_SECRET 自動生成）
+bash scripts/deploy.sh       # 部署 + 灌 env + 裝 Upstash 整合 + 註冊 webhook
+```
+
+**B｜一鍵 button**（純網頁）
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FYoungger9765%2Fline-ai-assistant&env=LINE_CHANNEL_SECRET,LINE_CHANNEL_ACCESS_TOKEN,SYNC_SECRET)
+
+1. 按 button，填 3 個 env（`LINE_CHANNEL_SECRET`、`LINE_CHANNEL_ACCESS_TOKEN`、`SYNC_SECRET` 自訂一組）→ Deploy
+2. 到 Vercel 專案 → **Storage** → 裝 **Upstash for Redis**（會自動注入 `UPSTASH_*` 變數）→ **Redeploy**
+3. 註冊 webhook：`curl -X POST -H "Authorization: Bearer 你的SYNC_SECRET" https://你的專案.vercel.app/api/setup`（secret 走 header、不放進網址）
+
+**共同：本機 `.env`（給 sync 用）** — 把 `.env.example` 複製成 `.env`，`SYNC_SECRET` 填**與部署時同一組**、`BOT_URL` 填你的 Vercel 網址、再加 `LINE_CHANNEL_ACCESS_TOKEN` 與 `LINE_USER_ID`。腳本路徑（A）的 `.env` 已由 `setup_env.sh` 建好。
+
+**驗收**：打開 `https://你的專案.vercel.app/api/health`，看到 `{"status":"ok","store":"upstash",...}` 就是通了；`503` 代表 Upstash 沒接好。
 
 `.env` 已在 `.gitignore` 裡，不會被 push 到 GitHub
 
