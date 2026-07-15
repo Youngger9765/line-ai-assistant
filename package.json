@@ -4,7 +4,8 @@
   "description": "LINE 群組 AI 助理 — 收集訊息，用 Codex 產生摘要",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+    "test": "node --test test/"
   },
   "dependencies": {
     "@line/bot-sdk": "^9.6.0",

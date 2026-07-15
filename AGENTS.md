@@ -6,7 +6,7 @@ Read `CLAUDE.md` for the project workflow, but follow the Codex-specific rules b
 
 When the user says `setup` / `部署` / `deploy` / `設定`, do the whole onboarding for them with the Vercel CLI and your own judgment. Keep their actions to the absolute minimum — ideally they only **approve authorizations and confirm**. Do not make them read commands or open a dashboard.
 
-**You do, end to end (via `npx vercel`, the user installs nothing):** generate `SYNC_SECRET` yourself, deploy to **production** (`--prod`), set the three env vars (`SYNC_SECRET`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`), provision storage, redeploy, write `BOT_URL` to `.env`, then verify.
+**You do, end to end (via `npx vercel`, the user installs nothing):** generate `SYNC_SECRET` yourself, deploy to **production** (`--prod`), set the three env vars (`SYNC_SECRET`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`), provision storage (`vercel integration add upstash`), redeploy, **register the LINE webhook** (`curl -X POST -H "Authorization: Bearer $SYNC_SECRET" "$BOT_URL/api/setup"` — the app points LINE's webhook back at itself), write `BOT_URL` to `.env`, then verify.
 
 **The user only has to:**
 1. Open the `vercel login` authorization link you surface, and confirm the device code
@@ -17,6 +17,7 @@ When the user says `setup` / `部署` / `deploy` / `設定`, do the whole onboar
 - Preview deployments are auth-walled — always deploy with `--prod` so the webhook is public
 - `vercel login`'s authorization URL + device code may not print to the user on their own — the moment you start login, **copy the URL and device code into your reply, tell the user to open it and confirm, then wait**. Never run login silently; the user cannot guess where to authorize (observed 2026-06-15 fresh-run: setup stalled because the URL was never shown)
 - Storage: `vercel integration add upstash` → choose **Upstash for Redis** from the interactive list (a bare `upstash` errors with "Product not found")
+- Webhook: after deploy, register it by POSTing to `${BOT_URL}/api/setup` with the `Authorization: Bearer $SYNC_SECRET` header (the endpoint self-registers LINE's webhook using the channel token + platform host env — pass the secret in the header, never in the URL). The LINE **Use webhook** toggle itself is not API-settable → tell the user to switch it on once in the Messaging API page (the only LINE-side click they cannot avoid)
 - If `${BOT_URL}/api/health` returns an "Authentication Required" page, the project has **Deployment Protection** on (rare on fresh Hobby accounts) → ask the user to turn off Vercel Authentication for Production; this is the only step that might need the website
 - Never print, echo, or commit any secret; secrets live only in `.env` / Vercel
 
