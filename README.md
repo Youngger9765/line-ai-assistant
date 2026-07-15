@@ -18,7 +18,7 @@ LINE 群組訊息 → Webhook → Upstash Redis 暫存
 你的電腦：Codex → GET /api/messages → 摘要報告
 ```
 
-Vercel 與 Redis 負責收集，Codex 從你的電腦操作並使用 ChatGPT 模型摘要
+Vercel 與 Upstash Redis 負責收集，Codex 從你的電腦操作並使用 ChatGPT 模型摘要
 
 ---
 
@@ -80,19 +80,30 @@ Vercel 與 Redis 負責收集，Codex 從你的電腦操作並使用 ChatGPT 模
 
 **Upstash Redis 設定：**
 
-1. 部署完成後，到 Vercel Dashboard → 你的專案 → **Storage**
-2. 從 Marketplace 安裝 **Upstash Redis**
-3. 建立並連結資料庫，選 Tokyo 或 Singapore
-4. 確認 Vercel 自動設定 `UPSTASH_REDIS_REST_URL` 和 `UPSTASH_REDIS_REST_TOKEN`
-5. 重新部署一次（Settings → Deployments → 最新的 → Redeploy）
+1. 到 [Upstash](https://upstash.com/) 用 GitHub 登入，**Create Database**（Redis，免費，region 選 Tokyo 或 Singapore）
+2. 建好後在資料庫頁面複製 **REST URL** 與 **REST TOKEN**
+3. 回 Vercel → 你的專案 → Settings → **Environment Variables**，加這兩個：
 
-### Step 4：設定 LINE Webhook URL
+   | 變數名稱 | 值 |
+   |---------|---|
+   | `UPSTASH_REDIS_REST_URL` | 剛複製的 REST URL |
+   | `UPSTASH_REDIS_REST_TOKEN` | 剛複製的 REST TOKEN |
 
-1. 回到 LINE Developers Console
-2. 到你的 Channel → **Messaging API** 頁面
-3. 設定 **Webhook URL**：`https://你的專案.vercel.app/api/webhook`
-4. 打開 **Use webhook**
-5. 按 **Verify** 確認連線成功
+4. 重新部署一次（Deployments → 最新的 → **Redeploy**）讓變數生效
+
+> Upstash 免費方案**不會因閒置暫停**，不用擔心 keepalive（這也是選它不選 Supabase 的原因）。
+
+### Step 4：一鍵設定 Webhook（自動）
+
+先到 LINE Developers → 你的 Channel → **Messaging API** 頁面，把 **Use webhook** 打開（開關預設是關的）。
+
+然後打開這個網址**一次**（把兩個值換成你的）：
+
+```
+https://你的專案.vercel.app/api/setup?secret=你的SYNC_SECRET
+```
+
+它會自動把 Webhook URL 指回你的專案並觸發驗證，看到 `{ "ok": true }` 就完成了 —— 不用自己填 URL、也不用按 Verify。
 
 ### Step 5：把 Bot 加入群組
 

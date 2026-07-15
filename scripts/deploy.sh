@@ -45,20 +45,29 @@ echo "  🔧 設定環境變數..."
 echo "$LINE_CHANNEL_SECRET" | vercel env add LINE_CHANNEL_SECRET production --yes 2>/dev/null || true
 echo "$LINE_CHANNEL_ACCESS_TOKEN" | vercel env add LINE_CHANNEL_ACCESS_TOKEN production --yes 2>/dev/null || true
 echo "$SYNC_SECRET" | vercel env add SYNC_SECRET production --yes 2>/dev/null || true
+if [ -n "$UPSTASH_REDIS_REST_URL" ] && [ -n "$UPSTASH_REDIS_REST_TOKEN" ]; then
+  echo "$UPSTASH_REDIS_REST_URL" | vercel env add UPSTASH_REDIS_REST_URL production --yes 2>/dev/null || true
+  echo "$UPSTASH_REDIS_REST_TOKEN" | vercel env add UPSTASH_REDIS_REST_TOKEN production --yes 2>/dev/null || true
+else
+  echo "  ⚠️  .env 沒有 Upstash 變數 —— 請先在 upstash.com 建 Redis、把 REST URL/TOKEN 填進 .env（跑 scripts/setup_env.sh）"
+fi
 
-# 5. Redis 必須從 Vercel Marketplace 安裝
-echo ""
-echo "  💾 Redis 設定"
-echo "  請到 Vercel 專案 → Storage → Marketplace → Upstash Redis"
-echo "  建立並連結資料庫後，確認專案出現 UPSTASH_REDIS_REST_URL 與 UPSTASH_REDIS_REST_TOKEN"
-read -r -p "  完成後按 Enter 繼續重新部署..."
-
-# 6. 重新部署（讓 env + Redis integration 生效）
-echo "  🔄 重新部署..."
+# 5. 重新部署（讓環境變數生效）
+echo "  🔄 重新部署（讓環境變數生效）..."
 vercel deploy --prod --yes
+
+# 6. 抓網址
+DEPLOY_URL=$(vercel inspect 2>/dev/null | grep -Eo 'https://[a-z0-9.-]+\.vercel\.app' | head -1)
+
+# 7. 自動註冊 LINE Webhook（省掉手動去 Console 貼 URL + 按 Verify）
+if [ -n "$DEPLOY_URL" ] && [ -n "$SYNC_SECRET" ]; then
+  echo "  🔗 自動設定 LINE Webhook..."
+  curl -s -H "Authorization: Bearer $SYNC_SECRET" "$DEPLOY_URL/api/setup" || true
+  echo ""
+fi
 
 echo ""
 echo "✅ 部署完成！"
-echo "   你的網址：$(vercel inspect 2>/dev/null | grep 'Production' | head -1 || echo '請到 Vercel Dashboard 查看')"
+echo "   你的網址：${DEPLOY_URL:-請到 Vercel Dashboard 查看}"
 echo ""
-echo "下一步：到 LINE Developers 設定 Webhook URL"
+echo "下一步：到 LINE Developers → Messaging API 把「Use webhook」打開（若還沒），再把 Bot 加進群組"
