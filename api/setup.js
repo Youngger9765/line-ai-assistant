@@ -1,24 +1,39 @@
+import crypto from 'crypto';
+
 // 一鍵設定端點 — bot 用自己的 access token 把 LINE Webhook URL 指回自己
 //
 // 目的：省掉「到 LINE Developers Console 手動貼 webhook URL + 按 Verify」那一步。
-// 學員部署完，打開 https://<你的專案>.vercel.app/api/setup?secret=<SYNC_SECRET> 一次即可。
+// 用法（POST，secret 走 header，不進 URL）：
+//   curl -X POST -H "Authorization: Bearer <SYNC_SECRET>" https://<你的專案>.vercel.app/api/setup
+// deploy.sh 部署後會自動幫你打這個。
 //
-// 安全：用 SYNC_SECRET 擋（避免別人亂改你的 webhook）；只會動「這個 channel 自己」的 webhook。
+// 安全：
+//   - 只收 Authorization: Bearer header（不接受 ?secret= query，避免 secret 進 URL / access log）
+//   - webhook 目標網域只信平台注入的 env（VERCEL_PROJECT_PRODUCTION_URL / VERCEL_URL），
+//     不接受 ?url= 或 Host header（否則有 SYNC_SECRET 的人能把 webhook 導去任意主機）
+//   - 抓不到可信網域就 fail closed
 
 const LINE_API = 'https://api.line.me/v2/bot/channel/webhook';
 
-function unauthorized(res) {
-  return res.status(401).json({
-    error: 'Unauthorized — 需要 ?secret={SYNC_SECRET}（或 Authorization: Bearer {SYNC_SECRET}）',
-  });
+function timingSafeEqualStr(a, b) {
+  const ab = Buffer.from(String(a));
+  const bb = Buffer.from(String(b));
+  if (ab.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ab, bb);
 }
 
 export default async function handler(req, res) {
-  // --- 驗證 SYNC_SECRET ---
-  const provided =
-    req.query.secret || (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  if (!process.env.SYNC_SECRET || provided !== process.env.SYNC_SECRET) {
-    return unauthorized(res);
+  if (req.method !== 'POST') {
+    return res.status(405).json({
+      error: 'Method not allowed — 用 POST + Authorization: Bearer {SYNC_SECRET}',
+    });
+  }
+
+  // --- 驗證 SYNC_SECRET（只走 header，constant-time 比對）---
+  const secret = process.env.SYNC_SECRET;
+  const provided = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!secret || !provided || !timingSafeEqualStr(provided, secret)) {
+    return res.status(401).json({ error: 'Unauthorized — 需要 Authorization: Bearer {SYNC_SECRET}' });
   }
 
   const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
@@ -26,16 +41,14 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'LINE_CHANNEL_ACCESS_TOKEN 未設定' });
   }
 
-  // --- 決定 webhook URL：優先 production 網域，可用 ?url= 覆蓋 ---
-  const rawHost =
-    req.query.url ||
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
-    process.env.VERCEL_URL ||
-    req.headers.host;
-  if (!rawHost) {
-    return res.status(400).json({ error: '抓不到網域，請帶 ?url=你的專案.vercel.app' });
+  // --- webhook 目標網域：只信平台注入的 env，抓不到就 fail closed ---
+  const trustedHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  if (!trustedHost) {
+    return res.status(500).json({
+      error: '抓不到可信網域，請設定 VERCEL_PROJECT_PRODUCTION_URL',
+    });
   }
-  const host = String(rawHost).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  const host = String(trustedHost).replace(/^https?:\/\//, '').replace(/\/+$/, '');
   const endpoint = `https://${host}/api/webhook`;
 
   const authHeaders = {

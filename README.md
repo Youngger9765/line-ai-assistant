@@ -97,13 +97,16 @@ Vercel 與 Upstash Redis 負責收集，Codex 從你的電腦操作並使用 Cha
 
 先到 LINE Developers → 你的 Channel → **Messaging API** 頁面，把 **Use webhook** 打開（開關預設是關的）。
 
-然後打開這個網址**一次**（把兩個值換成你的）：
+然後在終端機跑這行**一次**（把兩個值換成你的）：
 
 ```
-https://你的專案.vercel.app/api/setup?secret=你的SYNC_SECRET
+curl -X POST -H "Authorization: Bearer 你的SYNC_SECRET" https://你的專案.vercel.app/api/setup
 ```
 
-它會自動把 Webhook URL 指回你的專案並觸發驗證，看到 `{ "ok": true }` 就完成了 —— 不用自己填 URL、也不用按 Verify。
+看到 `{ "ok": true }` 就完成了 —— 它自動把 Webhook URL 指回你的專案並觸發驗證，不用自己填 URL、也不用按 Verify。
+
+> 用 `scripts/deploy.sh` 部署的話，這一步已經自動幫你做了。
+> （為了安全，SYNC_SECRET 走 header、不放進網址，所以不是用瀏覽器開）
 
 ### Step 5：把 Bot 加入群組
 

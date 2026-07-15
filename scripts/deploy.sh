@@ -62,7 +62,7 @@ DEPLOY_URL=$(vercel inspect 2>/dev/null | grep -Eo 'https://[a-z0-9.-]+\.vercel\
 # 7. 自動註冊 LINE Webhook（省掉手動去 Console 貼 URL + 按 Verify）
 if [ -n "$DEPLOY_URL" ] && [ -n "$SYNC_SECRET" ]; then
   echo "  🔗 自動設定 LINE Webhook..."
-  curl -s -H "Authorization: Bearer $SYNC_SECRET" "$DEPLOY_URL/api/setup" || true
+  curl -s -X POST -H "Authorization: Bearer $SYNC_SECRET" "$DEPLOY_URL/api/setup" || true
   echo ""
 fi
 
