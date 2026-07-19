@@ -29,9 +29,9 @@ test('設 Upstash env → store = upstash', async () => {
   assert.equal(m.store, 'upstash');
 });
 
-test('設 Postgres env → store = supabase（fallback 後端仍支援）', async () => {
+test('設 Postgres env（Neon / Supabase）→ store = postgres', async () => {
   clearStoreEnv();
   process.env.POSTGRES_URL = 'postgres://localhost:5432/testdb';
   const m = await import('../lib/redis.js?pg-only');
-  assert.equal(m.store, 'supabase');
+  assert.equal(m.store, 'postgres');
 });
