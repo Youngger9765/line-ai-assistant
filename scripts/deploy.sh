@@ -46,9 +46,9 @@ echo "$LINE_CHANNEL_SECRET" | vercel env add LINE_CHANNEL_SECRET production --ye
 echo "$LINE_CHANNEL_ACCESS_TOKEN" | vercel env add LINE_CHANNEL_ACCESS_TOKEN production --yes 2>/dev/null || true
 echo "$SYNC_SECRET" | vercel env add SYNC_SECRET production --yes 2>/dev/null || true
 
-# 5. 裝 Upstash Redis（Vercel 整合，自動注入 UPSTASH_* env；跟 Codex/AGENTS.md 同一種裝法）
-echo "  💾 裝 Upstash Redis 整合..."
-vercel integration add upstash || echo "  （已裝過可略過；互動清單請選 Upstash for Redis）"
+# 5. 裝 Neon Postgres（Vercel 整合，自動注入 POSTGRES_URL；跟 Codex/AGENTS.md 同一種裝法）
+echo "  💾 裝 Neon Postgres 整合..."
+vercel integration add neon || echo "  （已裝過可略過；互動清單請選 Neon；第一次需在瀏覽器同意一次 marketplace 條款）"
 
 # 6. 重新部署（讓 env + 整合生效）
 echo "  🔄 重新部署..."
