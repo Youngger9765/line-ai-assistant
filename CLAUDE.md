@@ -17,6 +17,7 @@ When the user says `setup` / `部署` / `deploy` / `設定`, do the whole onboar
 4. Confirm at the end
 
 **Non-obvious facts you must apply:**
+- **Prerequisite — Node (check first):** the whole flow runs via `npx vercel`, which needs Node.js on the machine. Before anything, run `node -v`; if it fails, tell the user to install Node **LTS** from nodejs.org, wait, then continue. This is the one thing `npx` cannot self-provide — do not assume the desktop app bundles Node.
 - Preview deployments are auth-walled — always deploy with `--prod` so the webhook is public
 - `vercel login`'s authorization URL + device code may not print on their own — the moment you start login, **copy the URL and device code into your reply, tell the user to open it and confirm, then wait**. Never run login silently
 - Storage: Neon via the official agent-optimized marketplace CLI (ref: vercel.com/docs/cli/integration). After `vercel login`, run **`vercel integration accept-terms neon`** (one interactive human confirm; if it returns a `verification_uri`/device step, surface it like the login link and wait), then **`vercel integration add neon --environment production`**. This provisions a free Postgres DB **under the user's own account** and, post-provision, auto-connects it to the linked project and injects `POSTGRES_URL` (it runs `vercel env pull`). `lib/redis.js` reads `POSTGRES_URL` — no code change. Do NOT use Upstash (its Vercel integration has no free tier)
