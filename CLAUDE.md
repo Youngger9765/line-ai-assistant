@@ -58,6 +58,10 @@ Do not claim success when the endpoint is unreachable, authentication fails, or 
 
 When the user says 「推送」「傳到 LINE」「推給我」, read `.env` for `LINE_CHANNEL_ACCESS_TOKEN` and `LINE_USER_ID`, and push the latest summary via the LINE Push API. Never expose the token in output.
 
+## Progress map (闖關地圖)
+
+When the user says `進度` / `地圖` / `我在哪` / `闖關` / `跑到哪` / `progress`, run `bash scripts/progress.sh` and show its output as-is. It's a read-only detector — it shows which checkpoint they're on, which LINE keys are still missing (and where to get them), and the concrete next step. Don't paraphrase; the map IS the answer.
+
 ## Safety
 
 - Keep all secrets in `.env` (already gitignored); never commit `.env`, `logs/`, or downloaded messages
