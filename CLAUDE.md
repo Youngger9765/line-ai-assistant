@@ -60,7 +60,7 @@ When the user says 「推送」「傳到 LINE」「推給我」, read `.env` for
 
 ## Progress map (闖關地圖)
 
-When the user says `進度` / `地圖` / `我在哪` / `闖關` / `跑到哪` / `progress`, run `node scripts/progress.mjs` and show its output as-is. It's a read-only detector — it shows which checkpoint they're on, which LINE keys are still missing (and where to get them), and the concrete next step. Don't paraphrase; the map IS the answer.
+When the user says `進度` / `地圖` / `我在哪` / `闖關` / `跑到哪` / `progress`, run `node scripts/progress.mjs` and show its output as-is. It's a read-only detector — it shows which checkpoint they're on, which LINE keys are still missing (and where to get them), and the concrete next step. Don't paraphrase; the map IS the answer. It also (re)generates a visual `progress.html` (闖關地圖, auto-refreshes) — tell the user to open it in a browser; it updates every time you re-run this.
 
 ## Safety
 
