@@ -8,3 +8,6 @@ logs/*
 messages/
 .gstack/
 .env*.local
+
+# 闖關地圖（每次跑 progress.mjs 產生的執行期輸出，不進 git）
+progress.html
