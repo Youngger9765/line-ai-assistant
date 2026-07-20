@@ -26,7 +26,7 @@ Vercel 與 Neon (Postgres) 負責收集，你在新版 ChatGPT 桌面版切到 C
 
 你需要以下帳號：
 
-- ChatGPT 方案 + **新版 ChatGPT 桌面版**（已內含 Codex 模式；舊獨立 Codex app 已停用，2026/7 起整合進 ChatGPT，左上角切 Chat / Work / Codex）
+- **新版 ChatGPT 桌面版**（已內含 Codex 模式；舊獨立 Codex app 已停用，2026/7 起整合進 ChatGPT，左上角切 **ChatGPT / Codex** 兩模式）—— **建議 ChatGPT Plus（$20/月）**：免費版也有 Codex，但一堂課密集用會撞額度（每 5 小時約 10–30 則），Plus 才跑得順
 - [LINE Developers](https://developers.line.biz/) 帳號
 - [Vercel](https://vercel.com/) 帳號（用 GitHub 登入）
 - [GitHub](https://github.com/) 帳號
