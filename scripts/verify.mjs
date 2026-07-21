@@ -20,6 +20,10 @@ for (const line of readFileSync(ENV_FILE, 'utf8').split('\n')) {
   if (i > 0) env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
 }
 const filled = (v) => !!v && !/your_|xxx|placeholder/i.test(v);
+// BOT_URL may be host-only or already include a scheme (Vercel CLI writes it
+// with https://). Normalize to a single-scheme base so we never build
+// https://https://… — see test_sync_line.py for the matching Python lock.
+const apiBase = (raw) => 'https://' + String(raw || '').replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
 let pass = 0, fail = 0;
 const ok = (m) => { console.log('  ✅ ' + m); pass++; };
@@ -46,20 +50,20 @@ ok(`Node 已裝（${process.version}）`);
 console.log('\n1️⃣  Health Check');
 if (filled(env.BOT_URL)) {
   try {
-    const j = await getJson(`https://${env.BOT_URL}/api/health`);
+    const j = await getJson(`${apiBase(env.BOT_URL)}/api/health`);
     if (j.status === 'ok') {
       const g = j.groups ?? '?';
       if (j.store === 'postgres') ok(`服務正常，後端=postgres（Neon）✓，${g} 個群組`);
       else warn(`服務正常但後端=${j.store}（預期 postgres/Neon）— 確認是不是還在用舊 upstash，${g} 群`);
     } else bad(`health 回應非 ok：${JSON.stringify(j)}`);
-  } catch (e) { bad(`連不上 https://${env.BOT_URL}/api/health（${e.message}）`); }
+  } catch (e) { bad(`連不上 ${apiBase(env.BOT_URL)}/api/health（${e.message}）`); }
 } else bad('BOT_URL 未設（還沒部署？）');
 
 // 2 Messages API
 console.log('\n2️⃣  Messages API（Bearer token）');
 if (filled(env.BOT_URL) && filled(env.SYNC_SECRET)) {
   try {
-    const j = await getJson(`https://${env.BOT_URL}/api/messages`, { Authorization: `Bearer ${env.SYNC_SECRET}` });
+    const j = await getJson(`${apiBase(env.BOT_URL)}/api/messages`, { Authorization: `Bearer ${env.SYNC_SECRET}` });
     if (typeof j.totalMessages !== 'undefined') ok(`API 正常，${j.totalMessages} 則待 sync 訊息`);
     else bad(`Messages API 異常（SYNC_SECRET 對不上？）：${JSON.stringify(j)}`);
   } catch (e) { bad(`Messages API 連不上（${e.message}）`); }

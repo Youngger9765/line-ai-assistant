@@ -39,9 +39,25 @@ def load_env():
             os.environ.setdefault(key.strip(), val.strip())
 
 
+def build_api_url(bot_url, path):
+    """從 BOT_URL 組出絕對 API URL，容忍 BOT_URL 帶不帶 scheme。
+
+    BOT_URL 可能是 host-only（line-ai-verify.vercel.app）或含 scheme
+    （https://line-ai-verify.vercel.app — Vercel CLI 部署時就是這樣寫進 .env）。
+    兩種都必須組出「單一 scheme」的 URL；否則 urllib 會對 "https" 做 DNS 而掛掉。
+    """
+    host = bot_url.strip()
+    if host.startswith("https://"):
+        host = host[len("https://"):]
+    elif host.startswith("http://"):
+        host = host[len("http://"):]
+    host = host.rstrip("/")
+    return f"https://{host}{path}"
+
+
 def fetch_messages(bot_url, sync_secret, clear=False):
     """從 /api/messages 抓取訊息"""
-    url = f"https://{bot_url}/api/messages"
+    url = build_api_url(bot_url, "/api/messages")
     if clear:
         url += "?clear=true"
 
