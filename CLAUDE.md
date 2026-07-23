@@ -6,28 +6,34 @@ Same workflow as `AGENTS.md` — this file is for **Claude Code Desktop** users 
 
 When the user says `setup` / `部署` / `deploy` / `設定`, do the whole onboarding for them with the Vercel CLI and your own judgment. Keep their actions to the absolute minimum — ideally they only **approve authorizations and confirm**. Do not make them read commands or open a dashboard.
 
+**Do it in TWO stacks so each is independently verifiable — finish Vercel+Neon completely before touching LINE.**
+
+**Stack 1 — Vercel + Neon (NO LINE keys yet), via `npx vercel`, the user installs nothing:** generate `SYNC_SECRET` yourself, deploy to **production** (`--prod`), provision storage (`vercel integration add neon --environment production`), redeploy so `POSTGRES_URL` takes effect, write `BOT_URL` to `.env`, then verify `${BOT_URL}/api/health` returns `store: postgres`. **Do NOT ask for the LINE keys in this stack** — `/api/health` does not need them, so this whole stack completes on its own.
+
+**Stack 2 — LINE (keys + webhook), only AFTER Stack 1's health is green:** collect the two LINE keys *safely* (see the safe-input note below), set `LINE_CHANNEL_SECRET` + `LINE_CHANNEL_ACCESS_TOKEN`, redeploy, then **hand the user the webhook endpoint `${BOT_URL}/api/webhook`** for them to paste into LINE (see the Webhook note). Finally confirm end to end: after they send a group message, run `sync` and read one message back.
+
 **Isolation (critical):** everything runs under the USER's OWN Vercel + Neon account (their own `vercel login`) → each user gets a **private** deployment + database that nobody else — including the instructor — can read. NEVER deploy multiple users into one shared project/account.
 
-**You do, end to end (via `npx vercel`, the user installs nothing):** generate `SYNC_SECRET` yourself, deploy to **production** (`--prod`), set the three env vars (`SYNC_SECRET`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`), provision storage, redeploy, **register the LINE webhook** (`curl -X POST -H "Authorization: Bearer $SYNC_SECRET" "$BOT_URL/api/setup"` — the app points LINE's webhook back at itself), write `BOT_URL` to `.env`, then verify.
-
 **The user only has to:**
-1. Open the `vercel login` authorization link you surface, and confirm the device code (this login is what makes the deployment theirs and private — after it, you run everything else for them)
-2. **Accept the Neon marketplace terms once** in the link you surface (first-time only per account)
-3. Paste the LINE **Channel Secret** and **Access Token** — LINE has no CLI, so this is the only thing you cannot get yourself
-4. Confirm at the end
+1. Open the `vercel login` authorization link + device code you surface, and Allow (this login makes the deployment theirs and private) — Stack 1
+2. **Create the Neon database** in the browser link you surface (keep the Free plan — no credit card) — Stack 1
+3. Paste the two LINE keys *safely* (masked input, or a file path — see safe-input note; never let the raw value hit the chat) — Stack 2
+4. Paste the webhook endpoint you hand them into LINE's **Webhook URL** and switch **Use webhook** on — Stack 2 (the only LINE-side clicks that have no API)
+5. Confirm at the end
 
-**Non-obvious facts you must apply:**
-- **Prerequisite — Node (check first):** the whole flow runs via `npx vercel`, which needs Node.js on the machine. Before anything, run `node -v`; if it fails, tell the user to install Node **LTS** from nodejs.org, wait, then continue. This is the one thing `npx` cannot self-provide — do not assume the desktop app bundles Node.
+**Non-obvious facts you must apply (the rest you already know):**
+- **Prerequisite — Node (check first):** the whole flow runs via `npx vercel`, which needs Node.js on the machine. Before anything, run `node -v`; if it fails, tell the user to install Node **LTS** from nodejs.org, wait for them to finish, then continue. This is the one thing `npx` cannot self-provide — do not assume the desktop app bundles Node.
 - Preview deployments are auth-walled — always deploy with `--prod` so the webhook is public
-- `vercel login`'s authorization URL + device code may not print on their own — the moment you start login, **copy the URL and device code into your reply, tell the user to open it and confirm, then wait**. Never run login silently
-- Storage: Neon via the official agent-optimized marketplace CLI (ref: vercel.com/docs/cli/integration). After `vercel login`, run **`vercel integration accept-terms neon`** (one interactive human confirm; if it returns a `verification_uri`/device step, surface it like the login link and wait), then **`vercel integration add neon --environment production`**. This provisions a free Postgres DB **under the user's own account** and, post-provision, auto-connects it to the linked project and injects `POSTGRES_URL` (it runs `vercel env pull`). `lib/redis.js` reads `POSTGRES_URL` — no code change. Do NOT use Upstash (its Vercel integration has no free tier)
-- Webhook: after deploy, register it by POSTing to `${BOT_URL}/api/setup` with the `Authorization: Bearer $SYNC_SECRET` header (self-registers LINE's webhook using the channel token + platform host env — pass the secret in the header, never in the URL). The LINE **Use webhook** toggle is not API-settable → tell the user to switch it on once in the Messaging API page (the only LINE-side click they cannot avoid)
-- If `${BOT_URL}/api/health` returns an "Authentication Required" page, the project has **Deployment Protection** on → ask the user to turn off Vercel Authentication for Production
+- `vercel login`'s authorization URL + device code may not print to the user on their own — the moment you start login, **copy the URL and device code into your reply, tell the user to open it and confirm, then wait**. Never run login silently; the user cannot guess where to authorize (observed 2026-06-15 fresh-run: setup stalled because the URL was never shown)
+- Database: Neon via the official agent-optimized marketplace CLI (ref: vercel.com/docs/cli/integration). After `vercel login`, run **`vercel integration accept-terms neon`** (one interactive human confirm; if it returns a `verification_uri`/device step, surface it to the user like the login link and wait), then **`vercel integration add neon --environment production`**. This provisions a free Postgres DB **under the user's own account** and, post-provision, auto-connects it to the linked project and injects `POSTGRES_URL` (it runs `vercel env pull` for you). The app reads `POSTGRES_URL` directly — no code change. If terms are already accepted on the account, `add` alone suffices.
+- Webhook: manual paste is the default. After Stack 2 redeploys, hand the user `${BOT_URL}/api/webhook`, tell them to paste it into LINE Developers → Messaging API → Webhook settings → Webhook URL → Update, then switch **Use webhook** on. `/api/setup` still exists as an automation endpoint, but do not use it as the default classroom path — the manual step lets the user see the connection.
+- Safe LINE key input: prefer a masked/hidden input prompt so raw values never appear in chat or logs. If the platform cannot mask input, tell the user to save the two values in a temporary `.txt` file and paste only the file path; read the file, set the Vercel env vars, then delete the file.
+- If `${BOT_URL}/api/health` returns an "Authentication Required" page, the project has **Deployment Protection** on (rare on fresh Hobby accounts) → ask the user to turn off Vercel Authentication for Production; this is the only step that might need the website
 - Never print, echo, or commit any secret; secrets live only in `.env` / Vercel
 
 Do not claim setup is done until `/api/health` returns ok and one `sync` actually returns data.
 
-> Claude Code Desktop note: you can run the commands above in the app's integrated terminal / agent. Same flow as the CLI — the user still only authorizes login, accepts Neon terms, and pastes the LINE keys.
+> Claude Code Desktop note: you can run the commands above in the app's integrated terminal / agent. Same flow as the CLI — the user still only authorizes login, creates Neon, safely provides LINE keys, pastes the webhook endpoint, and confirms.
 
 ## Sync
 

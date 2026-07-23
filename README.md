@@ -58,23 +58,23 @@ Vercel 與 Neon (Postgres) 負責收集，你在新版 ChatGPT 桌面版切到 C
 
 打開**新版 ChatGPT 桌面版**、左上角切到 **Codex 模式**，開啟（或拖入）這個專案資料夾，跟它說 **「部署」**（或 `setup` / `deploy`）。
 
-**Codex 會自動做完**（你不用開終端機打指令、不用進 Vercel 後台）：
-- 產生 `SYNC_SECRET`、部署到 Vercel production、設定環境變數
-- 裝 **Neon (Postgres)**（資料暫存，免費、免綁卡、閒置自動休眠不會被停權）
-- 自動把 **LINE Webhook** 指回你的專案並驗證
-- 把 `BOT_URL` 寫進 `.env`、最後打 `/api/health` 確認接通
+**流程分兩段（先 Vercel + Neon，再 LINE）——重活 Codex 做，你只點幾下、不用開終端機、不用進 Vercel 後台：**
 
-**你只要做 4 件事（其餘 Codex 全包）**：
+- **① Vercel + Neon（先做完，這段不碰 LINE 金鑰）**：Codex 產生 `SYNC_SECRET`、部署到 Vercel production、裝 **Neon (Postgres)**（免費、免綁卡、閒置自動休眠不會被停權）、把 `BOT_URL` 寫進 `.env`，最後打 `/api/health` 確認回 `store: postgres`。
+- **② LINE（上一段 health 綠了才做）**：你把 2 把 LINE 金鑰**安全**交給 Codex（遮罩輸入，或把值存成 txt 檔、只貼**檔案路徑**——值不進對話），Codex 設好環境變數、重新部署，然後**給你一條 webhook 網址**讓你貼回 LINE。
+
+**你只要做這幾件事（其餘 Codex 全包）**：
 1. 打開 Codex 給你的 **Vercel 登入連結**，授權（確認 device code）
-2. **同意一次 Neon 條款**（第一次裝 Neon 時 Codex 會給你一個網址，點進去按同意，之後不用再點）
-3. 貼上 LINE 的 **Channel Secret** 和 **Access Token**（LINE 沒有 CLI，只有這個 Codex 拿不到）
-4. 最後確認
+2. **建立 Neon 資料庫**（Codex 給你網址，保持 **Free** 方案、按 Create → Connect Project）
+3. 安全貼上 LINE 的 **Channel Secret / Access Token**（遮罩輸入或 txt 檔路徑，值不進對話）
+4. 把 Codex 給的 **webhook 網址貼進 LINE**、再打開 **Use webhook** 開關
+5. 最後確認
 
 > 不想用 Codex？見文末「手動部署（備援）」。
 
 ### Step 3：打開 LINE 的「Use webhook」開關
 
-Codex 已經幫你把 Webhook URL 填好、也驗證過了，但 LINE 的 **Use webhook** 開關**沒有 API 可以切**，只能手動開一次：
+Codex 會給你一條 webhook 網址（你的網址 + `/api/webhook`）—— 貼進 LINE Developers → Messaging API → **Webhook settings → Webhook URL → Update**（出現綠勾），再把 LINE 的 **Use webhook** 開關手動打開一次（這個開關**沒有 API 可以切**）：
 
 到 LINE Developers → 你的 Channel → **Messaging API** → 把 **Use webhook** 打開。
 
