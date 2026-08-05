@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildGates, NEXT_STEPS, currentLevel } from '../scripts/quest.mjs';
 
-// 回歸鎖：闖關地圖的關卡切法（2026-08-06 志光試講前的兩個真實缺陷）
+// 回歸鎖：闖關地圖的關卡切法（2026-08-06 課前整備時抓到的兩個真實缺陷）
 //
 //   ① gates 與 NEXT_STEPS 是兩個必須同步的陣列。動了 gates 卻漏改 NEXT_STEPS，
 //      NEXT_STEPS[current] 會是 undefined —— 而且只在學員「攻頂那一刻」才炸，
