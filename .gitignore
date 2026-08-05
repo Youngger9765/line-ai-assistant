@@ -11,4 +11,14 @@ messages/
 
 # 闖關地圖（每次跑 progress.mjs 產生的執行期輸出，不進 git）
 progress.html
+
+# 講師專用 demo 工具與教學素材（本機用，不進這個 public 學員範本）
+tools/
+demo
+.claude/
 __pycache__/
+.env*
+
+# Neon marketplace CLI 裝的 agent skills（不進學員範本）
+.agents/
+skills-lock.json
