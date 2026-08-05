@@ -6,6 +6,7 @@
 import { readFileSync, existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildGates, NEXT_STEPS, VISION, currentLevel } from './quest.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ENV_FILE = join(ROOT, '.env');
@@ -51,34 +52,9 @@ const neon = store === 'postgres';
 const receiving = groups > 0;
 const synced = hasLogs();
 
-// 每一關 = 一道機關。pass=通關條件（對到真實可偵測訊號，非任意）｜gain=過關拿到的戰利品
-const gates = [
-  { done: hasProj,   t: '整裝出發',      s: '裝好工具 + 拿到課程資料夾（Node 這些 app 會幫你）',
-    pass: '電腦有 Node + 已打開課程資料夾', gain: '🎒 冒險裝備' },
-  { done: hasKeys,   t: '取得兩把鑰匙',  s: '在 LINE 後台複製 Channel Secret + Access Token',
-    pass: '建好 LINE 官方帳號、兩把鑰匙都貼進來了', gain: '🔑 LINE 鑰匙 ×2' },
-  // 部署 + 資料庫 = 同一關：投影片「Codex 開範本，先部署 Vercel + Neon」是一個段落，
-  // Codex 也是一次跑完，拆兩關的話學員會直接跳關、對不上台上的進度
-  { done: deployed && neon, t: '喚醒你的 bot',
-    s: '跟 Codex 說「部署」，Vercel 和雲端資料庫一次幫你裝好（你都不用碰）',
-    pass: 'bot 網址活著、資料庫也接上了', gain: '🌐 雲端基地' },
-  { done: receiving, t: '接通 LINE 大門', s: '把網址貼回 LINE、再邀 bot 進你的群，它開始默默收訊息',
-    pass: 'webhook 接上、bot 進群、收到第一則訊息', gain: '📨 訊息之流' },
-  { done: synced,    t: '召喚第一份摘要', s: '跟 Codex 說「sync」，讓它讀群組、產出重點',
-    pass: '成功 sync、產出第一份摘要', gain: '📋 智慧卷軸' },
-];
-let current = gates.findIndex((g) => !g.done);
-if (current === -1) current = gates.length;
+const gates = buildGates({ hasProj, hasKeys, deployed, neon, receiving, synced });
+const current = currentLevel(gates);
 
-const nextSteps = [
-  '在 ChatGPT 切到 Codex、把課程資料夾拖進來（或用對話框上方「選擇專案」開）',
-  '去 LINE Developers 建你的官方帳號，拿 Channel Secret + Access Token（兩把鑰匙）',
-  '跟 Codex 說「部署」→ 授權登入一次 → 照著建雲端資料庫 → 它會自動幫你上線',
-  '把 Codex 給你的網址貼回 LINE 的 Webhook URL、開「Use webhook」，再邀 bot 進群發幾句話',
-  '跟 Codex 說「sync」，看它把群訊息整理成重點',
-  '🎉 攻頂了！跟 Codex 說人話改摘要格式 / 加功能，打造你自己的助理',
-];
-const VISION = '完成後：你的 LINE 群多一個 AI 助理，自動幫你整理對話、抓重點、列待辦';
 const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
 // ============ ① 終端機文字地圖 ============
@@ -95,7 +71,7 @@ if (current < gates.length) {
   console.log(`\n🎯 這關怎樣算過：${gates[current].pass}`);
   console.log(`🎁 過了拿到：${gates[current].gain}`);
 }
-console.log('\n👉 下一步\n  ' + nextSteps[current]);
+console.log('\n👉 下一步\n  ' + NEXT_STEPS[current]);
 
 // ============ ② 產生 progress.html（瑪利歐風世界地圖，純靜態）============
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -200,7 +176,7 @@ background:#25243a;border:3px solid var(--line);box-shadow:0 3px 0 #16152260}
 ${stationsHtml}
 ${castleHtml}
 </div>
-<div class="next"><div class="h">👉 你的下一步</div><div class="big">${esc(nextSteps[current])}</div></div>
+<div class="next"><div class="h">👉 你的下一步</div><div class="big">${esc(NEXT_STEPS[current])}</div></div>
 <div class="bag"><div class="h">🎒 背包 · 已收集戰利品</div><div class="slots">${bagHtml}</div></div>
 <p class="foot">這張世界地圖只是「顯示」你的進度，<b>它自己不會動</b><br>
 跟 Codex 說一聲 <code>進度</code>，它重新探勘你電腦後、地圖才會更新<br>
