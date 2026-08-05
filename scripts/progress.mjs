@@ -57,12 +57,13 @@ const gates = [
     pass: '電腦有 Node + 已打開課程資料夾', gain: '🎒 冒險裝備' },
   { done: hasKeys,   t: '取得兩把鑰匙',  s: '在 LINE 後台複製 Channel Secret + Access Token',
     pass: '建好 LINE 官方帳號、兩把鑰匙都貼進來了', gain: '🔑 LINE 鑰匙 ×2' },
-  { done: deployed,  t: '喚醒你的 bot',  s: '跟 Codex 說「部署」，它全自動幫你上線（你不用碰 Vercel）',
-    pass: '部署跑完、bot 網址活著', gain: '🌐 bot 網址' },
-  { done: neon,      t: '打造記憶寶庫',  s: '雲端資料庫（跟著點就好，你不用懂它叫什麼）',
-    pass: '資料庫接上、bot 有地方記東西', gain: '💾 記憶水晶' },
-  { done: receiving, t: '接通 LINE 大門', s: '把 bot 邀進你的群，它開始默默收訊息',
-    pass: 'bot 進群、收到第一則群訊息', gain: '📨 訊息之流' },
+  // 部署 + 資料庫 = 同一關：投影片「Codex 開範本，先部署 Vercel + Neon」是一個段落，
+  // Codex 也是一次跑完，拆兩關的話學員會直接跳關、對不上台上的進度
+  { done: deployed && neon, t: '喚醒你的 bot',
+    s: '跟 Codex 說「部署」，Vercel 和雲端資料庫一次幫你裝好（你都不用碰）',
+    pass: 'bot 網址活著、資料庫也接上了', gain: '🌐 雲端基地' },
+  { done: receiving, t: '接通 LINE 大門', s: '把網址貼回 LINE、再邀 bot 進你的群，它開始默默收訊息',
+    pass: 'webhook 接上、bot 進群、收到第一則訊息', gain: '📨 訊息之流' },
   { done: synced,    t: '召喚第一份摘要', s: '跟 Codex 說「sync」，讓它讀群組、產出重點',
     pass: '成功 sync、產出第一份摘要', gain: '📋 智慧卷軸' },
 ];
@@ -72,9 +73,8 @@ if (current === -1) current = gates.length;
 const nextSteps = [
   '在 ChatGPT 切到 Codex、把課程資料夾拖進來（或用對話框上方「選擇專案」開）',
   '去 LINE Developers 建你的官方帳號，拿 Channel Secret + Access Token（兩把鑰匙）',
-  '跟 Codex 說「部署」→ 授權登入一次 → 貼上你的兩把鑰匙 → 它會自動幫你上線',
-  '已上線但沒接到記憶 → 跟 Codex 說「重新部署」或「接資料庫」',
-  '去 LINE 開「Use webhook」開關 + 把 bot 邀進你的群，發幾句話',
+  '跟 Codex 說「部署」→ 授權登入一次 → 照著建雲端資料庫 → 它會自動幫你上線',
+  '把 Codex 給你的網址貼回 LINE 的 Webhook URL、開「Use webhook」，再邀 bot 進群發幾句話',
   '跟 Codex 說「sync」，看它把群訊息整理成重點',
   '🎉 攻頂了！跟 Codex 說人話改摘要格式 / 加功能，打造你自己的助理',
 ];
