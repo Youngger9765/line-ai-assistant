@@ -1,6 +1,17 @@
 import crypto from 'crypto';
 import { Client } from '@line/bot-sdk';
+import { put } from '@vercel/blob';
 import { kv } from '../lib/redis.js';
+
+// 支援的媒體類型（sticker / location 等自動跳過，不寫 KV）
+const MEDIA_TYPES = ['image', 'video', 'audio', 'file'];
+
+// LINE getMessageContent() 回傳 stream → Buffer
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
 
 // LINE Webhook — 接收群組訊息，存入 Redis（純收集，不做摘要）
 
@@ -35,9 +46,11 @@ export default async function handler(req, res) {
 
   for (const event of events) {
     try {
-      // 只處理群組文字訊息
-      if (event.type !== 'message' || event.message.type !== 'text') continue;
+      // 只處理群組訊息：文字 + 媒體（圖片/影片/音訊/檔案）；貼圖/位置等跳過
+      if (event.type !== 'message') continue;
       if (event.source.type !== 'group') continue;
+      const msgType = event.message.type;
+      if (msgType !== 'text' && !MEDIA_TYPES.includes(msgType)) continue;
 
       const { groupId } = event.source;
       const { timestamp } = event;
@@ -57,10 +70,37 @@ export default async function handler(req, res) {
         }
       }
 
+      // 媒體訊息：下載內容 → 上傳 Vercel Blob 歸檔（拿公開 URL）；KV 只存 metadata
+      let mediaUrl = null, contentType = null, fileName = null;
+      if (MEDIA_TYPES.includes(msgType)) {
+        try {
+          const client = new Client({ channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN });
+          const stream = await client.getMessageContent(event.message.id);
+          contentType = stream.headers?.['content-type'] || 'application/octet-stream';
+          const buf = await streamToBuffer(stream);
+          const ext = msgType === 'file'
+            ? (event.message.fileName?.split('.').pop() || 'bin')
+            : msgType === 'video' ? 'mp4'
+            : msgType === 'audio' ? 'm4a'
+            : (contentType.split('/')[1] || 'jpg');
+          fileName = event.message.fileName || `${event.message.id}.${ext}`;
+          const blobPath = `line-media/${groupId}/${event.message.id}.${ext}`;
+          const blob = await put(blobPath, buf, { access: 'public', contentType });
+          mediaUrl = blob.url;
+        } catch (e) {
+          // 上傳失敗 fallback：mediaUrl=null，仍寫 metadata（不擋訊息收集）
+          console.error('媒體歸檔失敗:', e.message);
+        }
+      }
+
       // 儲存訊息（不設過期，sync 讀完後用 ?clear=true 清除）
       const msgKey = `msg:${groupId}:${timestamp}`;
       await kv.set(msgKey, {
-        text: event.message.text,
+        type: msgType,
+        text: msgType === 'text' ? event.message.text : null,
+        mediaUrl,
+        contentType,
+        fileName,
         userId,
         userName,
         timestamp,
