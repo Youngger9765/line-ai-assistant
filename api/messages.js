@@ -39,7 +39,11 @@ export default async function handler(req, res) {
         };
       }
       groups[msg.groupId].messages.push({
+        type: msg.type || 'text',
         text: msg.text,
+        mediaUrl: msg.mediaUrl || null,
+        contentType: msg.contentType || null,
+        fileName: msg.fileName || null,
         timestamp: msg.timestamp,
         userId: msg.userId,
         userName: msg.userName,

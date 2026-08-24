@@ -1,6 +1,15 @@
 import crypto from 'crypto';
 import { Client } from '@line/bot-sdk';
+import { put } from '@vercel/blob';
 import { kv } from '../lib/redis.js';
+import { buildMessageRecord, MEDIA_TYPES } from '../lib/message-record.js';
+
+// LINE getMessageContent() 回傳 stream → Buffer
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
 
 // LINE Webhook — 接收群組訊息，存入 Redis（純收集，不做摘要）
 
@@ -35,9 +44,11 @@ export default async function handler(req, res) {
 
   for (const event of events) {
     try {
-      // 只處理群組文字訊息
-      if (event.type !== 'message' || event.message.type !== 'text') continue;
+      // 只處理群組訊息：文字 + 媒體（圖片/影片/音訊/檔案）；貼圖/位置等跳過
+      if (event.type !== 'message') continue;
       if (event.source.type !== 'group') continue;
+      const msgType = event.message.type;
+      if (msgType !== 'text' && !MEDIA_TYPES.includes(msgType)) continue;
 
       const { groupId } = event.source;
       const { timestamp } = event;
@@ -57,15 +68,27 @@ export default async function handler(req, res) {
         }
       }
 
+      // 建立要儲存的訊息紀錄（純邏輯在 lib/message-record.js，IO 注入 → 可測）
+      const record = await buildMessageRecord(
+        event,
+        { userId, userName, timestamp, groupId },
+        {
+          downloadContent: async (messageId) => {
+            const client = new Client({ channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN });
+            const stream = await client.getMessageContent(messageId);
+            return { buffer: await streamToBuffer(stream), contentType: stream.headers?.['content-type'] };
+          },
+          putBlob: async (path, buffer, contentType) => {
+            const blob = await put(path, buffer, { access: 'public', contentType });
+            return blob.url;
+          },
+        }
+      );
+      if (!record) continue;
+
       // 儲存訊息（不設過期，sync 讀完後用 ?clear=true 清除）
       const msgKey = `msg:${groupId}:${timestamp}`;
-      await kv.set(msgKey, {
-        text: event.message.text,
-        userId,
-        userName,
-        timestamp,
-        groupId,
-      });
+      await kv.set(msgKey, record);
 
       // 記錄群組資訊（查 LINE API 拿群組名稱 + KV cache）
       const groupKey = `group:${groupId}`;
