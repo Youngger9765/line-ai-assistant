@@ -48,6 +48,33 @@ Treat `sync`, `同步`, `LINE 摘要`, `看群組`, and similar requests as the 
 
 Do not claim success when the endpoint is unreachable, authentication fails, or no response was verified
 
+## 範本
+
+`templates/` 資料夾裡有五套現成的「工作說明」，每套都是一段可以直接貼給你（Codex）的話，
+用來取代預設的 3–5 點摘要格式：
+
+| 名稱 | slug | 解決什麼 |
+|---|---|---|
+| 個人待辦 | `todo` | 散在群裡的待辦，收成一張清單 |
+| 專案群組週報 | `weekly` | 一週下來這個群發生了什麼，自動成稿 |
+| 會議行動項目 | `actions` | 誰負責、什麼時候，從對話裡挑出來 |
+| 客服整理 | `support` | 客戶問過什麼、還有哪些沒回 |
+| 學習筆記／資料庫 | `notes` | 網址丟進群，週末問它學到什麼 |
+
+- 使用者說「**套範本 ＜名稱或 slug＞**」：先讀 `templates/<slug>/README.md` 第二段，
+  跟使用者確認【】欄位要填什麼，再讀 `templates/<slug>/PROMPT.md`，把換好【】的內容
+  寫進這份檔案下面的「## 目前套用的範本」段（沒有就新增）。**一次只准套一套**——
+  套新的範本會直接覆蓋掉舊的那段，不並存。往後每次 sync 都套用這段，直到被覆蓋或取消。
+- 使用者說「**用一次 ＜名稱或 slug＞**」：只有這一次 sync 照 `templates/<slug>/PROMPT.md`
+  整理輸出，**不寫入**這份檔案，下一次 sync 恢復目前設定（預設或已套用的範本）。
+- 使用者說「**取消範本**」：把「## 目前套用的範本」整段刪掉，回到預設的 3–5 點摘要格式。
+- 每套範本的 fixtures 與人校過的預期輸出可參考 `templates/<slug>/fixtures.jsonl` 與
+  `templates/<slug>/範例輸出.md`。
+
+## 目前套用的範本
+
+（尚未套用，目前使用預設的 3–5 點摘要格式）
+
 ## Progress map (闖關地圖)
 
 When the user says `進度` / `地圖` / `我在哪` / `闖關` / `跑到哪` / `progress`, run `node scripts/progress.mjs` and show its output as-is. It's a read-only detector — it shows which checkpoint they're on, which LINE keys are still missing (and where to get them), and the concrete next step. Don't paraphrase; the map IS the answer. It also (re)generates a visual `progress.html` (闖關地圖, auto-refreshes) — tell the user to open it in a browser; it updates every time you re-run this.
