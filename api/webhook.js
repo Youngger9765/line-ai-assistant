@@ -3,6 +3,7 @@ import { Client } from '@line/bot-sdk';
 import { put } from '@vercel/blob';
 import { kv } from '../lib/redis.js';
 import { buildMessageRecord, MEDIA_TYPES } from '../lib/message-record.js';
+import { fetchLinkPreview } from '../lib/link-preview.js';
 
 // LINE getMessageContent() 回傳 stream → Buffer
 async function streamToBuffer(stream) {
@@ -82,6 +83,7 @@ export default async function handler(req, res) {
             const blob = await put(path, buffer, { access: 'public', contentType });
             return blob.url;
           },
+          fetchLinkPreview,
         }
       );
       if (!record) continue;
