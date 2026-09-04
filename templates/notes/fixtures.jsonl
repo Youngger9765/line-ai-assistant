@@ -1,12 +1,12 @@
-{"group": "我的收藏群", "user": "自己", "text": "這篇講 AI 在教育現場的應用蠻有趣的 https://example.com/ai-in-education 之後可以參考", "ts": "2026-08-30T21:00:00+08:00"}
-{"group": "我的收藏群", "user": "自己", "text": "先存起來 https://example.com/investing-basics-101", "ts": "2026-08-31T08:20:00+08:00"}
+{"group": "我的收藏群", "user": "自己", "text": "這篇講 AI 在教育現場的應用蠻有趣的 https://example.com/ai-in-education 之後可以參考", "ts": "2026-08-30T21:00:00+08:00", "linkTitle": "AI 如何改變教育現場：應用案例整理", "linkDesc": "介紹生成式 AI 在課堂與教材設計上的實際應用案例", "linkHost": "example.com"}
+{"group": "我的收藏群", "user": "自己", "text": "先存起來 https://example.com/investing-basics-101", "ts": "2026-08-31T08:20:00+08:00", "linkTitle": "投資理財入門：從零開始的資產配置", "linkDesc": "給新手的基礎投資觀念整理，涵蓋股票、ETF 與風險控管概念", "linkHost": "example.com"}
 {"group": "我的收藏群", "user": "自己", "text": "晚點吃什麼", "ts": "2026-08-31T12:00:00+08:00"}
-{"group": "讀書會群", "user": "書友阿哲", "text": "這個月讀書會可以討論一下這篇 https://example.org/book-club-notes-2026", "ts": "2026-08-31T20:00:00+08:00"}
-{"group": "我的收藏群", "user": "自己", "text": "這篇講大模型怎麼做個人化學習，值得細看 https://example.com/personalized-learning-llm", "ts": "2026-09-01T09:10:00+08:00"}
-{"group": "我的收藏群", "user": "自己", "text": "https://example.com/private-notion-doc 這個好像要登入才能看，之後再說", "ts": "2026-09-01T09:12:00+08:00"}
-{"group": "我的收藏群", "user": "自己", "text": "投資理財這篇談資產配置的邏輯不錯 https://example.com/asset-allocation-basics", "ts": "2026-09-01T21:30:00+08:00"}
+{"group": "讀書會群", "user": "書友阿哲", "text": "這個月讀書會可以討論一下這篇 https://example.org/book-club-notes-2026", "ts": "2026-08-31T20:00:00+08:00", "linkTitle": "2026 讀書會選書筆記", "linkDesc": "本月讀書會的討論重點與延伸思考整理", "linkHost": "example.org"}
+{"group": "我的收藏群", "user": "自己", "text": "這篇講大模型怎麼做個人化學習，值得細看 https://example.com/personalized-learning-llm", "ts": "2026-09-01T09:10:00+08:00", "linkTitle": "用大型語言模型打造個人化學習路徑", "linkDesc": "探討 LLM 如何依據學習者狀態動態調整教材與練習內容", "linkHost": "example.com"}
+{"group": "我的收藏群", "user": "自己", "text": "https://example.com/private-notion-doc 這個好像要登入才能看，之後再說", "ts": "2026-09-01T09:12:00+08:00", "linkTitle": null, "linkDesc": null, "linkHost": null}
+{"group": "我的收藏群", "user": "自己", "text": "投資理財這篇談資產配置的邏輯不錯 https://example.com/asset-allocation-basics", "ts": "2026-09-01T21:30:00+08:00", "linkTitle": "資產配置的邏輯與實務", "linkDesc": "說明如何依風險承受度分配股債比例，建立長期投資組合", "linkHost": "example.com"}
 {"group": "讀書會群", "user": "書友小美", "text": "大家這週有空來聚一下嗎", "ts": "2026-09-02T10:00:00+08:00"}
-{"group": "我的收藏群", "user": "自己", "text": "教育科技這篇談自適應學習系統，跟我最近在做的東西有點像 https://example.org/adaptive-learning-systems", "ts": "2026-09-02T22:00:00+08:00"}
+{"group": "我的收藏群", "user": "自己", "text": "教育科技這篇談自適應學習系統，跟我最近在做的東西有點像 https://example.org/adaptive-learning-systems", "ts": "2026-09-02T22:00:00+08:00", "linkTitle": null, "linkDesc": null, "linkHost": null}
 {"group": "我的收藏群", "user": "自己", "text": "https://example.com/ai-coding-assistants 這篇提到的工具清單可以看看", "ts": "2026-09-03T13:00:00+08:00"}
 {"group": "我的收藏群", "user": "自己", "text": "存一下，之後投資理財的內容可以整理成一篇筆記 https://example.com/index-fund-vs-stock-picking", "ts": "2026-09-03T21:00:00+08:00"}
 {"group": "讀書會群", "user": "書友阿哲", "text": "這篇跟我們上次討論的主題很像 https://example.org/reading-habit-research", "ts": "2026-09-04T19:00:00+08:00"}

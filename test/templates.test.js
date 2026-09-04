@@ -125,6 +125,33 @@ for (const slug of Object.keys(SLUGS)) {
   });
 }
 
+// 範本 5（學習筆記）練到連結標題功能：fixtures 裡含 URL 的訊息要有 linkTitle 抓到與抓不到兩種情況
+// （對應 lib/link-preview.js 產出的 linkTitle/linkDesc/linkHost，見 lib/message-record.js）
+test('templates/notes/fixtures.jsonl 練到 linkTitle 抓到與抓不到兩種情況', () => {
+  const raw = readFile(path.join(TEMPLATES_DIR, 'notes', 'fixtures.jsonl'));
+  const lines = raw.split('\n').map((l) => l.trim()).filter(Boolean);
+  const objs = lines.map((l) => JSON.parse(l));
+
+  const withTitle = objs.filter((o) => typeof o.linkTitle === 'string' && o.linkTitle.length > 0);
+  assert.ok(withTitle.length >= 5, `至少要有 5 則 linkTitle 非空，實際 ${withTitle.length}`);
+  for (const o of withTitle) {
+    assert.ok(o.linkTitle.length <= 120, `linkTitle 應 ≤120 字: ${o.linkTitle}`);
+    assert.ok('linkDesc' in o, `有 linkTitle 就該有 linkDesc 欄位: ${JSON.stringify(o)}`);
+    assert.ok('linkHost' in o, `有 linkTitle 就該有 linkHost 欄位: ${JSON.stringify(o)}`);
+  }
+
+  const nullTitle = objs.filter(
+    (o) => 'linkTitle' in o && o.linkTitle === null && /https?:\/\//.test(String(o.text ?? ''))
+  );
+  assert.ok(nullTitle.length >= 1, `至少要有 1 則含網址但 linkTitle 為 null（模擬抓不到），實際 ${nullTitle.length}`);
+});
+
+// 急件關鍵字不該吃到否定寫法（「不急」「不用急」「慢慢來」）
+test('templates/todo/PROMPT.md 有排除「不急」類否定寫法的規則', () => {
+  const prompt = readFile(path.join(TEMPLATES_DIR, 'todo', 'PROMPT.md'));
+  assert.match(prompt, /不急/, 'PROMPT.md 應提到排除「不急」類否定寫法不算急件');
+});
+
 test('AGENTS.md 有「## 範本」段且五個 slug 都列到', () => {
   const agents = readFile(path.join(ROOT, 'AGENTS.md'));
   assert.match(agents, /##\s*範本/, 'AGENTS.md 缺「## 範本」段');
