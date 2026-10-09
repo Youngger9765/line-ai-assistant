@@ -57,6 +57,40 @@ test('putBlob 失敗 → fallback：mediaUrl=null，仍回 metadata（不擋收�
   assert.equal(r.mediaUrl, null);
 });
 
+test('video and audio archive with expected paths and content types', async () => {
+  for (const [type, contentType, ext] of [
+    ['video', 'video/mp4', 'mp4'],
+    ['audio', 'audio/m4a', 'm4a'],
+  ]) {
+    const d = fakeDeps();
+    d.downloadContent = async (id) => {
+      assert.equal(id, `M-${type}`);
+      return { buffer: Buffer.from('BIN'), contentType };
+    };
+    const r = await buildMessageRecord({ message: { type, id: `M-${type}` } }, base, d);
+    assert.deepEqual(d.calls.put, [{ path: `line-media/G1/M-${type}.${ext}`, size: 3, ct: contentType }]);
+    assert.equal(r.mediaUrl, `https://blob.test/line-media/G1/M-${type}.${ext}`);
+    assert.equal(r.contentType, contentType);
+    assert.equal(r.fileName, `M-${type}.${ext}`);
+  }
+});
+
+test('download failure keeps media type and does not attempt upload', async () => {
+  const d = fakeDeps();
+  d.downloadContent = async () => { throw new Error('LINE unavailable'); };
+  const r = await buildMessageRecord({ message: { type: 'image', id: 'M6' } }, base, d);
+  assert.equal(r.type, 'image');
+  assert.equal(r.mediaUrl, null);
+  assert.deepEqual(d.calls.put, []);
+});
+
+test('download failure preserves supplied file name', { todo: 'buildMessageRecord drops fileName when download fails' }, async () => {
+  const d = fakeDeps();
+  d.downloadContent = async () => { throw new Error('LINE unavailable'); };
+  const r = await buildMessageRecord({ message: { type: 'file', id: 'M7', fileName: 'report.pdf' } }, base, d);
+  assert.equal(r.fileName, 'report.pdf');
+});
+
 test('pickExt: video→mp4 / audio→m4a / file 用原名 / image 看 contentType', () => {
   assert.equal(pickExt('video', 'video/mp4'), 'mp4');
   assert.equal(pickExt('audio', 'audio/m4a'), 'm4a');
