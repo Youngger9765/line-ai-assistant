@@ -86,3 +86,45 @@ test('attacker ?url= and Host header are ignored (no webhook hijack)', async () 
   const put = fetchCalls.find((c) => c.opts?.method === 'PUT');
   assert.equal(JSON.parse(put.opts.body).endpoint, 'https://my-bot.vercel.app/api/webhook');
 });
+
+test('missing LINE token fails before outbound calls', async () => {
+  delete process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  const res = mkRes();
+  await handler(mkReq({ headers: { authorization: 'Bearer right-secret' } }), res);
+  assert.equal(res.statusCode, 500);
+  assert.equal(fetchCalls.length, 0);
+});
+
+test('LINE endpoint PUT failure returns 502 without verification call', async () => {
+  globalThis.fetch = async (url, opts) => {
+    fetchCalls.push({ url, opts });
+    return { ok: false, status: 403, text: async () => 'denied' };
+  };
+  const res = mkRes();
+  await handler(mkReq({ headers: { authorization: 'Bearer right-secret' } }), res);
+  assert.equal(res.statusCode, 502);
+  assert.equal(res.body.status, 403);
+  assert.deepEqual(fetchCalls.map((call) => call.opts.method), ['PUT']);
+});
+
+test('LINE verification failure is reported after successful PUT', async () => {
+  globalThis.fetch = async (url, opts) => {
+    fetchCalls.push({ url, opts });
+    if (opts.method === 'PUT') return { ok: true };
+    throw new Error('verify unavailable');
+  };
+  const res = mkRes();
+  await handler(mkReq({ headers: { authorization: 'Bearer right-secret' } }), res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.verify.error, 'verify unavailable');
+  assert.deepEqual(fetchCalls.map((call) => call.opts.method), ['PUT', 'POST']);
+});
+
+test('VERCEL_URL supplies trusted host when production URL is absent', async () => {
+  delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  process.env.VERCEL_URL = 'fallback.vercel.app';
+  const res = mkRes();
+  await handler(mkReq({ headers: { authorization: 'Bearer right-secret' } }), res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(JSON.parse(fetchCalls[0].opts.body).endpoint, 'https://fallback.vercel.app/api/webhook');
+});
